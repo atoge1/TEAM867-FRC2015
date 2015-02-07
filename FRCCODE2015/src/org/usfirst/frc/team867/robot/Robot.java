@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -14,6 +15,7 @@ public class Robot extends IterativeRobot
 	RobotDrive myRobotForward; //robotdrive forward
 	Joystick driverJoy; //driver gamepad
 	BuiltInAccelerometer accel; // builtin accel
+	Preferences prefs = Preferences.getInstance(); //preferences menu
 	double driverJoyxaxis; // driver gamepad left x axis
 	double driverJoyyaxis; // driver gamepad left y axis
 	double driverJoyslow; // driver gamepad z axis (set speed)
@@ -27,10 +29,15 @@ public class Robot extends IterativeRobot
 	
 	
 	
+	
     public void robotInit() //initialization code; period independent
     { 
+    	prefs.putInt("frontleft", 2);
+    	prefs.putInt("rearleft", 1);
+    	prefs.putInt("frontright", 3);
+    	prefs.putInt("rearright", 0);
     	driverJoy = new Joystick(0);
-    	myRobotForward = new RobotDrive(2, 1, 3, 0); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
+    	myRobotForward = new RobotDrive(prefs.getInt("frontleft", 2), prefs.getInt("rearleft", 1), prefs.getInt("frontright", 3), prefs.getInt("rearright", 0)); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
     	accel = new BuiltInAccelerometer();
     }
 
@@ -58,11 +65,8 @@ public class Robot extends IterativeRobot
     	driverJoyslow = driverJoy.getRawAxis(2);
     	driveSlow = ((driverJoyslow + 1) * 4.5) + 1;
     	
-    	SmartDashboard.putNumber("driverJoyslow", driverJoyslow);
-    	
     	//reverse toggle
     	driverJoyreverse = driverJoy.getRawButton(2);
-    	SmartDashboard.putBoolean("driverJoyreverse", driverJoyreverse);
     	if(driverJoyreverse)
     	{
     		driveReverse = !driveReverse;
@@ -99,12 +103,11 @@ public class Robot extends IterativeRobot
     		}
     		
     		//print out drive values
-    		SmartDashboard.putNumber("driveSlow", driveSlow);
+    		SmartDashboard.putNumber("driveSlow", 10-driveSlow);
     		SmartDashboard.putNumber("driverJoyxaxis", driverJoyxaxis / driveSlow);
-    		SmartDashboard.putNumber("driverJoyyaxis", driverJoyyaxis / driveSlow);
+    		SmartDashboard.putNumber("driverJoyyaxis", -1 * driverJoyyaxis / driveSlow);
     		SmartDashboard.putBoolean("driverJoycw", driverJoycw);
    			SmartDashboard.putBoolean("driverJoyccw", driverJoyccw);
-   			SmartDashboard.putNumber("driveRotation", driveRotation);
    			myRobotForward.mecanumDrive_Cartesian(driverJoyxaxis / driveSlow , driverJoyyaxis / driveSlow, driveRotation, 0);
     		
     		
@@ -133,11 +136,10 @@ public class Robot extends IterativeRobot
     			driveRotation = 0.0;
     		}
     		
-    		SmartDashboard.putNumber("driveSlow", driveSlow);
+    		SmartDashboard.putNumber("driveSlow", 10-driveSlow);
     		SmartDashboard.putNumber("driverJoyxaxis", driverJoyxaxis / driveSlow);
-    		SmartDashboard.putNumber("driverJoyyaxis", driverJoyyaxis / driveSlow);
+    		SmartDashboard.putNumber("driverJoyyaxis", -1 * driverJoyyaxis / driveSlow);
    			SmartDashboard.putBoolean("driverJoyccw", driverJoyccw);
-   			SmartDashboard.putNumber("driveRotation", driveRotation);
    			myRobotForward.mecanumDrive_Cartesian( -1 * driverJoyxaxis / driveSlow, -1 * driverJoyyaxis / driveSlow, driveRotation, 0);
     		
     	}

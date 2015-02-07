@@ -1,0 +1,75 @@
+<xml version="1.0">
+<dashboard>
+	<widget field="driveSlow" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.ProgressBar">
+		<location x="293" y="452"/>
+		<property name="Maximum" value="9.0"/>
+	</widget>
+	<widget field="driveReverse" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.CheckBox">
+		<location x="403" y="355"/>
+	</widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="398" y="378"/>
+		<property name="Text" value="Reverse"/>
+	</static-widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="281" y="378"/>
+		<property name="Text" value="Go"/>
+	</static-widget>
+	<widget field="driverJoysafety" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.CheckBox">
+		<location x="278" y="354"/>
+	</widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="597" y="379"/>
+		<property name="Text" value="Clockwise"/>
+	</static-widget>
+	<widget field="driverJoycw" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.CheckBox">
+		<location x="610" y="352"/>
+	</widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="65" y="377"/>
+		<property name="Text" value="CounterClockwise"/>
+	</static-widget>
+	<widget field="driverJoyccw" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.CheckBox">
+		<location x="96" y="351"/>
+	</widget>
+	<widget field="driverJoyyaxis" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.SimpleDial">
+		<location x="397" y="14"/>
+		<width>325</width>
+		<height>295</height>
+		<property name="Upper Limit" value="0.1"/>
+		<property name="Lower Limit" value="-0.1"/>
+		<property name="Tick Interval" value="0.01"/>
+	</widget>
+	<widget field="driverJoyxaxis" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.SimpleDial">
+		<location x="22" y="19"/>
+		<width>334</width>
+		<height>292</height>
+		<property name="Upper Limit" value="0.1"/>
+		<property name="Lower Limit" value="-0.1"/>
+		<property name="Tick Interval" value="0.01"/>
+	</widget>
+	<widget field="Zaxis" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.LinePlot">
+		<location x="1259" y="47"/>
+	</widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="398" y="378"/>
+		<property name="Text" value="Reverse"/>
+	</static-widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="281" y="378"/>
+		<property name="Text" value="Go"/>
+	</static-widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="597" y="379"/>
+		<property name="Text" value="Clockwise"/>
+	</static-widget>
+	<static-widget class="edu.wpi.first.smartdashboard.gui.elements.Label">
+		<location x="65" y="377"/>
+		<property name="Text" value="CounterClockwise"/>
+	</static-widget>
+</dashboard>
+<live-window>
+</live-window>
+	<hidden field="driverJoyslow"/>
+	<hidden field="driverJoyreverse"/>
+</xml>
