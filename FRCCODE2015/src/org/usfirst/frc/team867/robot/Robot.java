@@ -3,12 +3,34 @@ package org.usfirst.frc.team867.robot;
 
 
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.BuiltInAccelerometer;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.Preferences;
-import edu.wpi.first.wpilibj.RobotDrive;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.BuiltInAccelerometer; //allows use of accelerometer on RobotRio
+import edu.wpi.first.wpilibj.Joystick; //creates joysticks (gamepad)
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //allows output of data
+import edu.wpi.first.wpilibj.Preferences; //allows for preferences table (setting values)
+import edu.wpi.first.wpilibj.RobotDrive; //motor set up and control
+import edu.wpi.first.wpilibj.Timer; //allows for timing (delay)
+
+//image proccessing
+import com.ni.vision.NIVision;
+import com.ni.vision.NIVision.DrawMode;
+import com.ni.vision.NIVision.Image;
+import com.ni.vision.NIVision.ShapeMode;
+import edu.wpi.first.wpilibj.CameraServer;
+
+//pneumatic imports
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.Compressor;
+
+/**
+ * 
+ * @author Aaron
+ * @author Andrew
+ * @version 0.4
+ * 
+ * REMEMBER TO PLUG IN DRIVER JOYSTICK FIRST (PORT 0)
+ * REBOOT ROBOTRIO AFTER CHANING PREFERENCES
+ * 
+ */
 
 public class Robot extends IterativeRobot 
 {
@@ -26,6 +48,14 @@ public class Robot extends IterativeRobot
 	boolean driveReverse; //store reverse toggle
 	double driveRotation; //rotation for the robot
 	double driveSlow; //robot speed 
+	Compressor compressor; //allows for compressor control
+	Solenoid firstSol; //first solenoid
+	Solenoid secondSol; //second solenoid
+	Solenoid thirdSol; //third solenoid
+	
+	//vision 
+	int camerasession;
+	Image  dcamera;
 	
 	
     public void robotInit() //initialization code; period independent
@@ -44,6 +74,10 @@ public class Robot extends IterativeRobot
     	prefs.putInt("DRIVERccw", 4);
     	prefs.putInt("DRIVERcw", 5);
     	
+    	//pneumatics
+    	prefs.putInt("SOLfirst", 0); //FIX DEFAULT VALUES
+    	prefs.putInt("SOLsecond", 1);
+    	prefs.putInt("SOLthird", 2);
     	
     	//initialize joysticks
     	driverJoy = new Joystick(0);
@@ -56,16 +90,26 @@ public class Robot extends IterativeRobot
     	driverJoyxaxis = driverJoy.getRawAxis(0);
 		driverJoyyaxis = driverJoy.getRawAxis(1);
 		
-		
-    	
-		
     	//initialize motors
     	myRobotForward = new RobotDrive(prefs.getInt("frontleft", 2), prefs.getInt("rearleft", 1), prefs.getInt("frontright", 3), prefs.getInt("rearright", 0)); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
     	
+    	//initialize solenoids
+    	firstSol = new Solenoid(prefs.getInt("SOLfirst", 0));
+    	secondSol = new Solenoid(prefs.getInt("SOLsecond", 1));
+    	thirdSol = new Solenoid(prefs.getInt("SOLthird", 2));
     	
+    	//initialize compressor
+    	compressor = new Compressor();
     	
-    	
+    	//initialize accel   	   	
     	accel = new BuiltInAccelerometer();
+    	
+    	//initialize vision
+    	dcamera = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
+    	camerasession = NIVision.IMAQdxOpenCamera("cam0",NIVision.IMAQdxCameraControlMode.CameraControlModeController);
+        NIVision.IMAQdxConfigureGrab(camerasession);
+        
+        
     }
 
     public void autonomousInit() //initialization code; autonomous
@@ -91,7 +135,12 @@ public class Robot extends IterativeRobot
     		drive();
     	}
     	
-    	
+    	//camera
+    	NIVision.IMAQdxStartAcquisition(camerasession);
+    	NIVision.Rect rect = new NIVision.Rect(10, 10, 100, 100);
+    	NIVision.IMAQdxGrab(camerasession, dcamera, 1);
+        NIVision.imaqDrawShapeOnImage(dcamera, dcamera, rect,DrawMode.DRAW_VALUE, ShapeMode.SHAPE_OVAL, 0.0f);
+        CameraServer.getInstance().setImage(dcamera);
     	
     	
     }
