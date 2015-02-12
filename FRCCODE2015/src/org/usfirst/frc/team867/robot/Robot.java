@@ -26,7 +26,7 @@ import edu.wpi.first.wpilibj.Compressor;
  * 
  * @author Aaron
  * @author Andrew
- * @version 0.5
+ * @version 0.6
  * 
  * REMEMBER TO PLUG IN DRIVER JOYSTICK FIRST (PORT 0)
  * 
@@ -39,6 +39,13 @@ public class Robot extends IterativeRobot
 	boolean driveReverse; //store reverse toggle
 	double driveRotation; //rotation for the robot
 	double driveSlow; //robot speed
+	boolean compressorstate; //whether or not compressor is on
+	boolean clampstate; //whether or not the lift-arms are clamped
+	
+	//create independent motors controllers
+	Talon extruder;
+	Talon winch;
+	Talon miniwheels;
 	
 	//driver controls
 	Joystick driverJoy; //driver gamepad
@@ -70,9 +77,11 @@ public class Robot extends IterativeRobot
 	Preferences prefs = Preferences.getInstance(); //preferences menu
 	 
 	Compressor compressor; //allows for compressor control
-	Solenoid firstSol; //first solenoid
-	Solenoid secondSol; //second solenoid
-	Solenoid thirdSol; //third solenoid
+	Solenoid LIFTextendSol; //first solenoid
+	Solenoid LIFTretractSol; //second solenoid
+	Solenoid EXTRextendSol; //third solenoid
+	Solenoid EXTRretractSol; //fourth solenoid
+	Solenoid purgeSol; //disconnected solenoid (to release air)
 	
 	//vision 
 	int camerasession;
@@ -110,9 +119,12 @@ public class Robot extends IterativeRobot
     	myRobotForward = new RobotDrive(2, 1, 3, 0); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
     	
     	//initialize solenoids
-    	firstSol = new Solenoid(0);
-    	secondSol = new Solenoid(1);
-    	thirdSol = new Solenoid(2);
+    	LIFTextendSol = new Solenoid(0);
+    	LIFTretractSol = new Solenoid(1);
+    	EXTRextendSol = new Solenoid(2);
+    	EXTRretractSol = new Solenoid(3);
+    	purgeSol = new Solenoid(4);
+    	
     	
     	//initialize compressor
     	compressor = new Compressor();
@@ -125,6 +137,11 @@ public class Robot extends IterativeRobot
     	camerasession = NIVision.IMAQdxOpenCamera("cam0",NIVision.IMAQdxCameraControlMode.CameraControlModeController);
         NIVision.IMAQdxConfigureGrab(camerasession);
         
+        //initialize independent motors
+        extruder = new Talon(4);
+        miniwheels = new Talon(5);
+        winch = new Talon(6);
+       
         
     }
 
@@ -140,7 +157,9 @@ public class Robot extends IterativeRobot
 
     public void teleopInit() //initialization code; teleop
     {
-    	driveReverse=false;
+    	driveReverse = false;
+    	compressorstate = false;
+    	clampstate = false;
     }
     
     public void teleopPeriodic() //teleoperated period (loops)
@@ -169,6 +188,83 @@ public class Robot extends IterativeRobot
  
     private void manipulate()
     {
+    	//code to toggle variable
+    	if (manipJoycompressor)
+    	{
+    		compressorstate = !compressorstate;
+    		Timer.delay(0.3);
+    	}
+    	
+    	//code to de/activate compressor
+    	if (compressorstate)
+    	{
+    		compressor.start();
+    	}
+    	else
+    	{
+    		compressor.stop();
+    	}
+    	
+    	//purge tanks
+    	if(manipJoypurge1 && manipJoypurge2)
+    	{
+    		purgeSol.set(true);
+    	}
+    	else
+    	{
+    		purgeSol.set(false);
+    	}
+    	
+    	//code to toggle variable
+    	if (manipJoyLIFTcylinder)
+    	{
+    		clampstate = !clampstate;
+    		Timer.delay(0.3);
+    	}
+    	
+    	//code to de/activate clamp
+    	if (clampstate) //clamped (pneumatics retracted)
+    	{
+    		LIFTextendSol.set(false);
+    		LIFTretractSol.set(true);
+    	}
+    	else
+    	{
+    		LIFTretractSol.set(false);
+    		LIFTextendSol.set(true);
+    	}
+    	
+    	//code to control extruder pneumatics
+    	if(manipJoyEXTRcylinder)
+    	{
+    		EXTRextendSol.set(false);
+    		EXTRextendSol.set(true);
+    	}
+    	else
+    	{
+    		EXTRextendSol.set(false);
+    		EXTRextendSol.set(true);
+    	}
+    	
+    	//winch control
+    	winch.set(manipJoyLEFTyaxis);
+    	
+    	//extruder in/out control
+    	if(manipJoyEXTRout)
+    	{
+    		extruder.set(-0.5);
+    	}
+    	else if(manipJoyEXTRin)
+    	{
+    		extruder.set(0.5);
+    	}
+    	else
+    	{
+    		extruder.set(0.0);
+    	}
+    	
+    	//mini-wheel control
+    	miniwheels.set(manipJoyRIGHTyaxis);
     	
     }
     
