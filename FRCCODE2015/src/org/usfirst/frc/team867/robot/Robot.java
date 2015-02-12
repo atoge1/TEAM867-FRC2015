@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //allows output of d
 import edu.wpi.first.wpilibj.Preferences; //allows for preferences table (setting values)
 import edu.wpi.first.wpilibj.RobotDrive; //motor set up and control
 import edu.wpi.first.wpilibj.Timer; //allows for timing (delay)
+import edu.wpi.first.wpilibj.Talon; //allows control of the arm and winch motors
 
 //image proccessing
 import com.ni.vision.NIVision;
@@ -25,19 +26,22 @@ import edu.wpi.first.wpilibj.Compressor;
  * 
  * @author Aaron
  * @author Andrew
- * @version 0.4
+ * @version 0.5
  * 
  * REMEMBER TO PLUG IN DRIVER JOYSTICK FIRST (PORT 0)
- * REBOOT ROBOTRIO AFTER CHANING PREFERENCES
  * 
  */
 
 public class Robot extends IterativeRobot 
 {
+	//robot variables
 	RobotDrive myRobotForward; //robotdrive forward -- JTTR_BUG
+	boolean driveReverse; //store reverse toggle
+	double driveRotation; //rotation for the robot
+	double driveSlow; //robot speed
+	
+	//driver controls
 	Joystick driverJoy; //driver gamepad
-	BuiltInAccelerometer accel; // builtin accel
-	Preferences prefs = Preferences.getInstance(); //preferences menu
 	double driverJoyxaxis; // driver gamepad left x axis
 	double driverJoyyaxis; // driver gamepad left y axis
 	double driverJoyslow; // driver gamepad z axis (set speed)
@@ -45,9 +49,26 @@ public class Robot extends IterativeRobot
 	boolean driverJoyccw; //pivot counter clockwise (4)
 	boolean driverJoycw; //pivot clockwise (5)
 	boolean driverJoyreverse; //reverse directions (forward is now backwards) (2)
-	boolean driveReverse; //store reverse toggle
-	double driveRotation; //rotation for the robot
-	double driveSlow; //robot speed 
+	
+	//manipulator controls
+	Joystick manipJoy;
+	double manipJoyLEFTxaxis; // manipulator gamepad left x axis
+	double manipJoyLEFTyaxis; // manipulator gamepad left y axis
+	double manipJoyRIGHTxaxis; // manipulator gamepad right x axis
+	double manipJoyRIGHTyaxis; // manipulator gamepad right y axis
+	boolean manipJoycompressor; //toggles compressor (8)
+	boolean manipJoyEXTRcylinder; //activates extruder "pusher"
+	boolean manipJoyEXTRout; //noodle out
+	boolean manipJoyEXTRin; //noodle in
+	boolean manipJoyLIFTcylinder; //clamp lift
+	boolean manipJoypurge1; //empty tanks (open exposed solenoid)
+	boolean manipJoypurge2; //empty tanks (open exposed solenoid)
+	
+	
+	BuiltInAccelerometer accel; // builtin accel
+	
+	Preferences prefs = Preferences.getInstance(); //preferences menu
+	 
 	Compressor compressor; //allows for compressor control
 	Solenoid firstSol; //first solenoid
 	Solenoid secondSol; //second solenoid
@@ -59,44 +80,39 @@ public class Robot extends IterativeRobot
 	
 	
     public void robotInit() //initialization code; period independent
-    { 
-    	//print preferences table
-    	
-    	//motor ports
-    	prefs.putInt("MOTORfrontleft", 2);
-    	prefs.putInt("MOTORrearleft", 1);
-    	prefs.putInt("MOTORfrontright", 3);
-    	prefs.putInt("MOTORrearright", 0);
-    	
-    	//driverjoy 
-    	prefs.putInt("DRIVERreverse", 2);
-    	prefs.putInt("DRIVERgo", 1);
-    	prefs.putInt("DRIVERccw", 4);
-    	prefs.putInt("DRIVERcw", 5);
-    	
-    	//pneumatics
-    	prefs.putInt("SOLfirst", 0); //FIX DEFAULT VALUES
-    	prefs.putInt("SOLsecond", 1);
-    	prefs.putInt("SOLthird", 2);
-    	
+    {     	  	
     	//initialize joysticks
     	driverJoy = new Joystick(0);
+    	manipJoy = new Joystick(1);
     	
     	//initialize joystick inputs
-    	driverJoyccw = driverJoy.getRawButton(prefs.getInt("DRIVERccw", 4));
-		driverJoycw = driverJoy.getRawButton(prefs.getInt("DRIVERcw", 5));
-    	driverJoygo = driverJoy.getRawButton(prefs.getInt("DRIVERgo",1));
-    	driverJoyreverse = driverJoy.getRawButton(prefs.getInt("DRIVERreverse", 2));
+    	driverJoyccw = driverJoy.getRawButton(4);
+		driverJoycw = driverJoy.getRawButton(5);
+    	driverJoygo = driverJoy.getRawButton(1);
+    	driverJoyreverse = driverJoy.getRawButton(2);
     	driverJoyxaxis = driverJoy.getRawAxis(0);
 		driverJoyyaxis = driverJoy.getRawAxis(1);
 		
+		manipJoyLEFTxaxis = manipJoy.getRawAxis(0);
+		manipJoyLEFTyaxis = manipJoy.getRawAxis(1);
+		manipJoyRIGHTxaxis = manipJoy.getRawAxis(4);
+		manipJoyRIGHTyaxis = manipJoy.getRawAxis(5);
+		manipJoycompressor = manipJoy.getRawButton(8);
+		manipJoyEXTRcylinder = manipJoy.getRawButton(6);
+		manipJoyEXTRout = manipJoy.getRawButton(2); 
+		manipJoyEXTRin = manipJoy.getRawButton(1);
+		manipJoyLIFTcylinder  = manipJoy.getRawButton(5); 
+		manipJoypurge1 = manipJoy.getRawButton(4); 
+		manipJoypurge1 = manipJoy.getRawButton(3);
+		
+		
     	//initialize motors
-    	myRobotForward = new RobotDrive(prefs.getInt("frontleft", 2), prefs.getInt("rearleft", 1), prefs.getInt("frontright", 3), prefs.getInt("rearright", 0)); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
+    	myRobotForward = new RobotDrive(2, 1, 3, 0); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
     	
     	//initialize solenoids
-    	firstSol = new Solenoid(prefs.getInt("SOLfirst", 0));
-    	secondSol = new Solenoid(prefs.getInt("SOLsecond", 1));
-    	thirdSol = new Solenoid(prefs.getInt("SOLthird", 2));
+    	firstSol = new Solenoid(0);
+    	secondSol = new Solenoid(1);
+    	thirdSol = new Solenoid(2);
     	
     	//initialize compressor
     	compressor = new Compressor();
@@ -135,19 +151,25 @@ public class Robot extends IterativeRobot
     		drive();
     	}
     	
+    	manipulate();
+    	
+    	    	
     	//camera
     	NIVision.IMAQdxStartAcquisition(camerasession);
     	NIVision.Rect rect = new NIVision.Rect(10, 10, 100, 100);
     	NIVision.IMAQdxGrab(camerasession, dcamera, 1);
         NIVision.imaqDrawShapeOnImage(dcamera, dcamera, rect,DrawMode.DRAW_VALUE, ShapeMode.SHAPE_OVAL, 0.0f);
         CameraServer.getInstance().setImage(dcamera);
-    	
-    	
     }
     
     public void testPeriodic() //test period
     {
     	//left blank on purpose
+    }
+ 
+    private void manipulate()
+    {
+    	
     }
     
     private void drive()
