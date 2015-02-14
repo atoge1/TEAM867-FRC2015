@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; //allows output of d
 import edu.wpi.first.wpilibj.Preferences; //allows for preferences table (setting values)
 import edu.wpi.first.wpilibj.RobotDrive; //motor set up and control
 import edu.wpi.first.wpilibj.Timer; //allows for timing (delay)
-import edu.wpi.first.wpilibj.Talon; //allows control of the arm and winch motors
+import edu.wpi.first.wpilibj.Jaguar; //allows control of the arm and winch motors
 
 //image proccessing
 import com.ni.vision.NIVision;
@@ -43,9 +43,9 @@ public class Robot extends IterativeRobot
 	boolean clampstate; //whether or not the lift-arms are clamped
 	
 	//create independent motors controllers
-	Talon extruder;
-	Talon winch;
-	Talon miniwheels;
+	Jaguar extruder;
+	Jaguar winch;
+	Jaguar miniwheels;
 	
 	//driver controls
 	Joystick driverJoy; //driver gamepad
@@ -138,9 +138,9 @@ public class Robot extends IterativeRobot
         NIVision.IMAQdxConfigureGrab(camerasession);
         
         //initialize independent motors
-        extruder = new Talon(4);
-        miniwheels = new Talon(5);
-        winch = new Talon(6);
+        extruder = new Jaguar(4);
+        miniwheels = new Jaguar(5);
+        winch = new Jaguar(6);
        
         
     }
