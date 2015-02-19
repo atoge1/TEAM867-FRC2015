@@ -11,13 +11,6 @@ import edu.wpi.first.wpilibj.RobotDrive; //motor set up and control
 import edu.wpi.first.wpilibj.Timer; //allows for timing (delay)
 import edu.wpi.first.wpilibj.Jaguar; //allows control of the arm and winch motors
 
-//image proccessing
-import com.ni.vision.NIVision;
-import com.ni.vision.NIVision.DrawMode;
-import com.ni.vision.NIVision.Image;
-import com.ni.vision.NIVision.ShapeMode;
-import edu.wpi.first.wpilibj.CameraServer;
-
 //pneumatic imports
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Compressor;
@@ -26,9 +19,9 @@ import edu.wpi.first.wpilibj.Compressor;
  * 
  * @author Aaron
  * @author Andrew
- * @version 0.6
+ * @version 0.8
  * 
- * REMEMBER TO PLUG IN DRIVER JOYSTICK FIRST (PORT 0)
+ * JOYSTICKS ARE ALPHABETICAL ORDER
  * 
  */
 
@@ -68,77 +61,35 @@ public class Robot extends IterativeRobot
 	boolean manipJoyEXTRout; //noodle out
 	boolean manipJoyEXTRin; //noodle in
 	boolean manipJoyLIFTcylinder; //clamp lift
-	boolean manipJoypurge1; //empty tanks (open exposed solenoid)
-	boolean manipJoypurge2; //empty tanks (open exposed solenoid)
-	
-	
-	BuiltInAccelerometer accel; // builtin accel
-	
-	Preferences prefs = Preferences.getInstance(); //preferences menu
 	 
-	Compressor compressor; //allows for compressor control
+	Compressor comp1; //allows for compressor control
 	Solenoid LIFTextendSol; //first solenoid
 	Solenoid LIFTretractSol; //second solenoid
 	Solenoid EXTRextendSol; //third solenoid
 	Solenoid EXTRretractSol; //fourth solenoid
-	Solenoid purgeSol; //disconnected solenoid (to release air)
-	
-	//vision 
-	int camerasession;
-	Image  dcamera;
 	
 	
     public void robotInit() //initialization code; period independent
     {     	  	
     	//initialize joysticks
-    	driverJoy = new Joystick(0);
-    	manipJoy = new Joystick(1);
+    	driverJoy = new Joystick(1);
+    	manipJoy = new Joystick(0);
     	
-    	//initialize joystick inputs
-    	driverJoyccw = driverJoy.getRawButton(4);
-		driverJoycw = driverJoy.getRawButton(5);
-    	driverJoygo = driverJoy.getRawButton(1);
-    	driverJoyreverse = driverJoy.getRawButton(2);
-    	driverJoyxaxis = driverJoy.getRawAxis(0);
-		driverJoyyaxis = driverJoy.getRawAxis(1);
-		
-		manipJoyLEFTxaxis = manipJoy.getRawAxis(0);
-		manipJoyLEFTyaxis = manipJoy.getRawAxis(1);
-		manipJoyRIGHTxaxis = manipJoy.getRawAxis(4);
-		manipJoyRIGHTyaxis = manipJoy.getRawAxis(5);
-		manipJoycompressor = manipJoy.getRawButton(8);
-		manipJoyEXTRcylinder = manipJoy.getRawButton(6);
-		manipJoyEXTRout = manipJoy.getRawButton(2); 
-		manipJoyEXTRin = manipJoy.getRawButton(1);
-		manipJoyLIFTcylinder  = manipJoy.getRawButton(5); 
-		manipJoypurge1 = manipJoy.getRawButton(4); 
-		manipJoypurge1 = manipJoy.getRawButton(3);
-		
-		
-    	//initialize motors
+      	//initialize motors
     	myRobotForward = new RobotDrive(2, 1, 3, 0); //frontLeftMotor, rearLeftMotor, frontRightMotor, rearRightMotor
     	
     	//initialize solenoids
     	LIFTextendSol = new Solenoid(0);
     	LIFTretractSol = new Solenoid(1);
-    	EXTRextendSol = new Solenoid(2);
-    	EXTRretractSol = new Solenoid(3);
-    	purgeSol = new Solenoid(4);
+    	EXTRextendSol = new Solenoid(3); //this is 3
+    	EXTRretractSol = new Solenoid(2); // this is 2
     	
     	
     	//initialize compressor
-    	compressor = new Compressor();
+    	comp1 = new Compressor();
     	
-    	//initialize accel   	   	
-    	accel = new BuiltInAccelerometer();
-    	
-    	//initialize vision
-    	dcamera = NIVision.imaqCreateImage(NIVision.ImageType.IMAGE_RGB, 0);
-    	camerasession = NIVision.IMAQdxOpenCamera("cam0",NIVision.IMAQdxCameraControlMode.CameraControlModeController);
-        NIVision.IMAQdxConfigureGrab(camerasession);
-        
-        //initialize independent motors
-        extruder = new Jaguar(4);
+    	//initialize independent motors
+    	extruder = new Jaguar(4);
         miniwheels = new Jaguar(5);
         winch = new Jaguar(6);
        
@@ -158,36 +109,93 @@ public class Robot extends IterativeRobot
     public void teleopInit() //initialization code; teleop
     {
     	driveReverse = false;
-    	compressorstate = false;
+    	compressorstate = true;
     	clampstate = false;
     }
     
     public void teleopPeriodic() //teleoperated period (loops)
     {
+     	//get joystick inputs
+    	
+    	//driver values
+    	driverJoyccw = driverJoy.getRawButton(4);
+		driverJoycw = driverJoy.getRawButton(5);
+    	driverJoygo = driverJoy.getRawButton(1);
+    	driverJoyreverse = driverJoy.getRawButton(2);
+    	driverJoyxaxis = driverJoy.getRawAxis(0);
+		driverJoyyaxis = driverJoy.getRawAxis(1);
+		driverJoyslow = driverJoy.getRawAxis(2);
+		
+		//manipulator values
+		manipJoyLEFTxaxis = manipJoy.getRawAxis(0);
+		manipJoyLEFTyaxis = manipJoy.getRawAxis(1);
+		manipJoyRIGHTxaxis = manipJoy.getRawAxis(4);
+		manipJoyRIGHTyaxis = manipJoy.getRawAxis(5);
+		manipJoycompressor = manipJoy.getRawButton(8);
+		manipJoyEXTRcylinder = manipJoy.getRawButton(6);
+		manipJoyEXTRout = manipJoy.getRawButton(2); 
+		manipJoyEXTRin = manipJoy.getRawButton(1);
+		manipJoyLIFTcylinder  = manipJoy.getRawButton(5); 
+		
+    	
+    	//debug
+    	
+    	SmartDashboard.putBoolean("Compressor", compressorstate);
+    	SmartDashboard.putBoolean("LiftPneumatics", clampstate);
+    	SmartDashboard.putNumber("driverxaxis", driverJoyxaxis);
+    	SmartDashboard.putNumber("driverJoyslow", driverJoyslow);
+    	SmartDashboard.putBoolean("driverJoyreverse", driverJoyreverse);
+    	SmartDashboard.putBoolean("go", driverJoygo);
+		SmartDashboard.putBoolean("driverJoyccw", driverJoyccw);
+		SmartDashboard.putNumber("driveRotation", driveRotation);
+    	
+    	
+    	
+    	//drive buttonstates
+    	
+    	//"slow" factor
+    	driveSlow = ((driverJoyslow + 1) * 4.5) + 1;
+    	    	
+    	//reverse toggle
+    	if(driverJoyreverse)
+    	{
+    		driveReverse = !driveReverse;
+    		Timer.delay(0.3);
+    	}
+    	
+    	//rotation
+		if(driverJoyccw)
+		{
+			driveRotation = -0.5;
+		}
+		else if(driverJoycw)
+		{
+			driveRotation = 0.5;
+			
+		}
+		else
+		{
+			driveRotation = 0.0;
+		}
+    	
     	//drive when go button is held
     	if(driverJoygo)
     	{
-    		drive();
+    		//forward driving
+    	    if(!driveReverse)
+    	    {
+    	   		myRobotForward.mecanumDrive_Cartesian(driverJoyxaxis / driveSlow , driverJoyyaxis / driveSlow, driveRotation, 0);    		
+    	    }
+    	    
+    	    //reverse driving
+    	    if(driveReverse)
+    	    {    		
+    	    	myRobotForward.mecanumDrive_Cartesian( -1 * driverJoyxaxis / driveSlow, -1 * driverJoyyaxis / driveSlow, driveRotation, 0);
+    	    }
     	}
     	
-    	manipulate();
-    	
-    	    	
-    	//camera
-    	NIVision.IMAQdxStartAcquisition(camerasession);
-    	NIVision.Rect rect = new NIVision.Rect(10, 10, 100, 100);
-    	NIVision.IMAQdxGrab(camerasession, dcamera, 1);
-        NIVision.imaqDrawShapeOnImage(dcamera, dcamera, rect,DrawMode.DRAW_VALUE, ShapeMode.SHAPE_OVAL, 0.0f);
-        CameraServer.getInstance().setImage(dcamera);
-    }
-    
-    public void testPeriodic() //test period
-    {
-    	//left blank on purpose
-    }
- 
-    private void manipulate()
-    {
+    	//manipulator buttonstates
+   
     	//code to toggle variable
     	if (manipJoycompressor)
     	{
@@ -198,21 +206,11 @@ public class Robot extends IterativeRobot
     	//code to de/activate compressor
     	if (compressorstate)
     	{
-    		compressor.start();
+    		comp1.start();
     	}
     	else
     	{
-    		compressor.stop();
-    	}
-    	
-    	//purge tanks
-    	if(manipJoypurge1 && manipJoypurge2)
-    	{
-    		purgeSol.set(true);
-    	}
-    	else
-    	{
-    		purgeSol.set(false);
+    		comp1.stop();
     	}
     	
     	//code to toggle variable
@@ -265,46 +263,12 @@ public class Robot extends IterativeRobot
     	
     	//mini-wheel control
     	miniwheels.set(manipJoyRIGHTyaxis);
-    	
+
     }
     
-    private void drive()
+    public void testPeriodic() //test period
     {
-    	//"slow" factor
-    	driverJoyslow = driverJoy.getRawAxis(2);
-    	driveSlow = ((driverJoyslow + 1) * 4.5) + 1;
-    	    	
-    	//reverse toggle
-    	if(driverJoyreverse)
-    	{
-    		driveReverse = !driveReverse;
-    		Timer.delay(0.3);
-    	}
-    	
-    	//rotation
-		if(driverJoyccw)
-		{
-			driveRotation = -0.5;
-		}
-		else if(driverJoycw)
-		{
-			driveRotation = 0.5;
-		}
-		else
-		{
-			driveRotation = 0.0;
-		}
-
-    	//forward driving
-    	if(!driveReverse)
-    	{
-   			myRobotForward.mecanumDrive_Cartesian(driverJoyxaxis / driveSlow , driverJoyyaxis / driveSlow, driveRotation, 0);    		
-    	}
-    	
-    	//reverse driving
-    	if(driveReverse)
-    	{    		
-    		myRobotForward.mecanumDrive_Cartesian( -1 * driverJoyxaxis / driveSlow, -1 * driverJoyyaxis / driveSlow, driveRotation, 0);
-    	}
+    	//left blank on purpose
     }
+ 
 }
